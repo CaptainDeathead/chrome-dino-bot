@@ -33,6 +33,8 @@ class CactiManager:
         for cactus_type in self.CACTUS_TYPES:
             self.cactus_images.append(Image.open(f"Images/Dark/{cactus_type}.png"))
             self.cactus_images.append(Image.open(f"Images/Light/{cactus_type}.png"))
+        
+        self.restart_img = Image.open("Images/restart.png")
 
         self.cacti = []
         self.last_cactus_addition = 0
@@ -41,41 +43,20 @@ class CactiManager:
         self.nojump_dist = self.DINO_JUMP_DIST
         self.last_offsets = [0 for _ in range(10)]
 
-    def add_cactus(self, cactus_rect: pg.Rect) -> None:
-        if time() - self.last_cactus_addition < self.dino_speed * self.CACTUS_WAIT_TIME_FACTOR:
-            #return
-            ...
-        
+    def add_cactus(self, cactus_rect: pg.Rect) -> None:        
         self.last_cactus_addition = time()
         self.cacti.append(Cactus(cactus_rect, self.last_cactus_addition))
 
     def update_cacti(self, cacti_rects: pg.Rect) -> None:
         cacti_len = len(self.cacti)
 
-        if cacti_len > 0:
-            #print(self.cacti[0].rect.x)
-            #print(self.cacti)
-            ...
-
-        dino_offset = 1.12 ** self.dino_speed
+        dino_offset = 1.113 ** self.dino_speed
 
         self.last_offsets.pop(0)
         self.last_offsets.append(dino_offset)
 
         actuall_offset = sum(self.last_offsets) / len(self.last_offsets)
-
         self.nojump_dist = self.DINO_JUMP_DIST + actuall_offset
-
-        #print(dino_offset)
-
-        if cacti_len > 0:
-            #print(self.cacti[0].rect.x, self.nojump_dist)
-            ...
-
-        #if cacti_len > 0 and self.cacti[0].rect.x < self.nojump_dist:
-        #    self.dino.jump()
-        #    print("Jumping...")
-        #    self.cacti.pop(0)
 
         cacti_len = len(self.cacti)
 
@@ -92,14 +73,22 @@ class CactiManager:
         self.dino_speed = new_dino_speed
 
     def grab_and_update(self, screenshot) -> None:
+        restart_btns = list(_locateAll_opencv(self.restart_img, screenshot, grayscale=True, confidence=self.IMG_DETECT_CONFIDENCE))
+
+        if len(restart_btns) > 0:
+            print("RESTARTING!!!")
+
+            self.dino.jump()
+
+            self.__init__(self.dino, self.surface)
+            return
+
         cacti_rects = []
         used_x_values = []
 
         for i, cactus_img in enumerate(self.cactus_images):
             for cactus in _locateAll_opencv(cactus_img, screenshot, grayscale=True, confidence=self.IMG_DETECT_CONFIDENCE):
-                print(i)
                 if i == 13 or i == 12:
-                    print(int(cactus.top))
                     if int(cactus.top) < self.TOP_BIRD_HEAD_Y: continue
 
                 cactus_left = int(cactus.left)
@@ -121,6 +110,4 @@ class CactiManager:
         if len(cacti_rects) == 0: return
 
         cacti_rects = sorted(cacti_rects, key=lambda rect: rect.x)
-
-        #print(cacti_rects)
         self.update_cacti(cacti_rects)

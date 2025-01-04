@@ -21,7 +21,7 @@ class CactiManager:
     CACTUS_TYPES = ['1-cactus-s', '1-cactus', '2-cactus-s', '2-cactus', '3-cactus', '4-cactus']
     CACTUS_WAIT_TIME_FACTOR = 0.1
     DINO_JUMP_DIST = 100
-    IMG_DETECT_CONFIDENCE = 0.95
+    IMG_DETECT_CONFIDENCE = 0.99
     BASE_DINO_SPEED = 12 # WITH START SLOWER = 12, WITHOUT = 14
 
     def __init__(self, dino: Dino, surface: pg.Surface) -> None:
@@ -38,6 +38,7 @@ class CactiManager:
 
         self.dino_speed = 0
         self.nojump_dist = self.DINO_JUMP_DIST
+        self.last_offsets = [0 for _ in range(10)]
 
     def add_cactus(self, cactus_rect: pg.Rect) -> None:
         if time() - self.last_cactus_addition < self.dino_speed * self.CACTUS_WAIT_TIME_FACTOR:
@@ -55,12 +56,20 @@ class CactiManager:
             #print(self.cacti)
             ...
 
-        dino_offset = 1.1 ** self.dino_speed
+        dino_offset = 1.12 ** self.dino_speed
 
-        self.nojump_dist = self.DINO_JUMP_DIST + dino_offset
+        self.last_offsets.pop(0)
+        self.last_offsets.append(dino_offset)
+
+        actuall_offset = sum(self.last_offsets) / len(self.last_offsets)
+
+        self.nojump_dist = self.DINO_JUMP_DIST + actuall_offset
+
+        print(dino_offset)
 
         if cacti_len > 0:
-            print(self.cacti[0].rect.x, self.nojump_dist)        
+            #print(self.cacti[0].rect.x, self.nojump_dist)
+            ...
 
         #if cacti_len > 0 and self.cacti[0].rect.x < self.nojump_dist:
         #    self.dino.jump()
@@ -92,7 +101,7 @@ class CactiManager:
                 if cactus_left < self.nojump_dist:
                     self.dino.jump()
                     self.cacti = []
-                    print("Jump")
+                    #print("Jump")
 
                 add_value = True
 

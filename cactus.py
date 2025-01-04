@@ -18,11 +18,12 @@ class Cactus:
         return str(self.rect)
 
 class CactiManager:
-    CACTUS_TYPES = ['1-cactus-s', '1-cactus', '2-cactus-s', '2-cactus', '3-cactus', '4-cactus']
+    CACTUS_TYPES = ['1-cactus-s', '1-cactus', '2-cactus-s', '2-cactus', '3-cactus', '4-cactus', 'bird_head']
     CACTUS_WAIT_TIME_FACTOR = 0.1
     DINO_JUMP_DIST = 100
     IMG_DETECT_CONFIDENCE = 0.99
     BASE_DINO_SPEED = 12 # WITH START SLOWER = 12, WITHOUT = 14
+    TOP_BIRD_HEAD_Y = 60
 
     def __init__(self, dino: Dino, surface: pg.Surface) -> None:
         self.dino = dino
@@ -65,7 +66,7 @@ class CactiManager:
 
         self.nojump_dist = self.DINO_JUMP_DIST + actuall_offset
 
-        print(dino_offset)
+        #print(dino_offset)
 
         if cacti_len > 0:
             #print(self.cacti[0].rect.x, self.nojump_dist)
@@ -94,8 +95,13 @@ class CactiManager:
         cacti_rects = []
         used_x_values = []
 
-        for cactus_img in self.cactus_images:
+        for i, cactus_img in enumerate(self.cactus_images):
             for cactus in _locateAll_opencv(cactus_img, screenshot, grayscale=True, confidence=self.IMG_DETECT_CONFIDENCE):
+                print(i)
+                if i == 13 or i == 12:
+                    print(int(cactus.top))
+                    if int(cactus.top) < self.TOP_BIRD_HEAD_Y: continue
+
                 cactus_left = int(cactus.left)
 
                 if cactus_left < self.nojump_dist:

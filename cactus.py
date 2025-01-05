@@ -25,7 +25,7 @@ class CactiManager:
     BASE_DINO_SPEED = 12 # WITH START SLOWER = 12, WITHOUT = 14
     TOP_BIRD_HEAD_Y = 60
 
-    def __init__(self, dino: Dino, surface: pg.Surface) -> None:
+    def __init__(self, dino: Dino, surface: pg.Surface, bot_playing: bool = True) -> None:
         self.dino = dino
         self.surface = surface
 
@@ -42,6 +42,10 @@ class CactiManager:
         self.dino_speed = 0
         self.nojump_dist = self.DINO_JUMP_DIST
         self.last_offsets = [0 for _ in range(10)]
+
+        self.game_over = False
+        self.score = 0
+        self.bot_playing = bot_playing
 
     def add_cactus(self, cactus_rect: pg.Rect) -> None:        
         self.last_cactus_addition = time()
@@ -72,15 +76,21 @@ class CactiManager:
     def set_dino_speed(self, new_dino_speed: int) -> None:
         self.dino_speed = new_dino_speed
 
+    def reset(self) -> None:
+        print("RESTARTING!!!")
+        self.dino.jump()
+
+        self.__init__(self.dino, self.surface)
+
     def grab_and_update(self, screenshot) -> None:
         restart_btns = list(_locateAll_opencv(self.restart_img, screenshot, grayscale=True, confidence=self.IMG_DETECT_CONFIDENCE))
 
         if len(restart_btns) > 0:
-            print("RESTARTING!!!")
-
-            self.dino.jump()
-
-            self.__init__(self.dino, self.surface)
+            print("Game end!")
+            if self.bot_playing:
+                self.reset()
+            
+            self.game_over = True
             return
 
         cacti_rects = []
@@ -89,13 +99,16 @@ class CactiManager:
         for i, cactus_img in enumerate(self.cactus_images):
             for cactus in _locateAll_opencv(cactus_img, screenshot, grayscale=True, confidence=self.IMG_DETECT_CONFIDENCE):
                 if i == 13 or i == 12:
-                    if int(cactus.top) < self.TOP_BIRD_HEAD_Y: continue
+                    if int(cactus.top) < self.TOP_BIRD_HEAD_Y:
+                        if self.bot_playing: continue
 
                 cactus_left = int(cactus.left)
 
                 if cactus_left < self.nojump_dist:
-                    self.dino.jump()
+                    if self.bot_playing: self.dino.jump()
+                    
                     self.cacti = []
+                    self.score += 1
                     #print("Jump")
 
                 add_value = True
